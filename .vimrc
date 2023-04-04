@@ -8,12 +8,12 @@ Plug 'joedbenjamin/pixelemconverter'
 Plug 'styled-components/vim-styled-components'
 Plug 'tomtom/tcomment_vim'
 Plug 'scrooloose/nerdtree'
-Plug 'scrooloose/syntastic'
+" Plug 'scrooloose/syntastic'
 Plug 'Xuyuanp/nerdtree-git-plugin'
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 Plug 'neoclide/jsonc.vim'
-"Plug 'SirVer/ultisnips'
+Plug 'SirVer/ultisnips'
 Plug 'leafgarland/typescript-vim'
 Plug 'peitalin/vim-jsx-typescript'
 Plug 'plasticboy/vim-markdown'
@@ -26,6 +26,7 @@ Plug 'scrooloose/nerdcommenter'
 Plug 'airblade/vim-gitgutter'
 " auto completion
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
+Plug 'jiangmiao/auto-pairs'
 "Search tool for vim
 Plug 'rking/ag.vim'
 " Edit selected text in new window/tab/region
@@ -50,9 +51,15 @@ Plug 'vim-scripts/ZoomWin'
 Plug 'zefei/simple-dark'
 Plug 'skywind3000/asyncrun.vim'
 Plug 'hashivim/vim-terraform'
+" Plug 'dense-analysis/ale'
+" Plug 'ervandew/supertab'
+" Plug 'vim-syntastic/syntastic'
+Plug 'github/copilot.vim'
 call plug#end()
 
 set modifiable
+" set hidden
+set autoread
 " Settings
 " call :set backup to create a backup of file with the .bak extension
 " the .bak will only have the prev saved version
@@ -62,7 +69,6 @@ packadd! justify
 " enable syntax and plugins (for netrw)
 syntax enable
 syntax on
-filetype plugin on
 filetype indent plugin on
 " set omnifunc=syntaxcomplete#Complete
 " set spell spelllang=en_us
@@ -70,6 +76,8 @@ let mapleader = ","
 set number
 " set termguicolors " Enables 24-bit RGB color
 set list
+set tabstop=4
+set shiftwidth=4
 set expandtab
 set shiftwidth=2
 set softtabstop=2
@@ -127,7 +135,9 @@ inoremap <leader>cst </<Esc>2F<lyiwf/pa><Esc>F<i<CR><CR><Esc>kS
 inoremap ``` ``````<esc>3ha<cr><cr><esc>kS<tab>
 inoremap <bs> <nop>
 inoremap <leader>M <esc>mM
- 
+
+" inoremap <leader>p <esc> :Copilot panel<cr>
+nnoremap <leader>p :Copilot panel<cr>
 nnoremap <leader>M `Ma
 " normal maps
 nnoremap m1 :normal! kmmjdd{p`m<cr>
@@ -224,7 +234,6 @@ nnoremap <leader>ar :AsyncRun! -cwd=$(VIM_FILEDIR) sh
 " uppercase word
 nnoremap <leader>U mzgUiw`z
 nnoremap <leader>u mzguiw`z
-nnoremap <leader>or :OR<cr>
 " code check
 nnoremap <leader>cc :CocList diagnostics<cr>
 
@@ -394,7 +403,7 @@ let g:NERDTreeGitStatusIndicatorMapCustom = {
 
 
 " Coc Settings
-let g:coc_global_extensions = ['coc-json', 'coc-tsserver', 'coc-emmet', 'coc-prettier', 'coc-html', 'coc-omnisharp', 'coc-pyright']
+let g:coc_global_extensions = ['coc-json', 'coc-tsserver', 'coc-emmet', 'coc-prettier', 'coc-html', 'coc-pyright']
 " coc plugins
 " if hidden is not set, TextEdit might fail.
 set hidden
@@ -461,16 +470,7 @@ inoremap <expr> <cr> pumvisible() ? "\<C-y>" : "\<C-g>u\<CR>"
 nmap <silent> [g <Plug>(coc-diagnostic-prev)
 nmap <silent> ]g <Plug>(coc-diagnostic-next)
 
-augroup typescript_commands
-  autocmd!
-  autocmd FileType typescript nmap <silent> gd <Plug>(coc-definition)
-  autocmd FileType typescript nmap <silent> gy <Plug>(coc-type-definition)
-  autocmd FileType typescript nmap <silent> gi <Plug>(coc-implementation)
-  autocmd FileType typescript nmap <silent> gr <Plug>(coc-references)
-augroup END
-
 " Use K to show documentation in preview window
-nnoremap <silent> K :call <SID>show_documentation()<CR>
 
 function! s:show_documentation()
   if (index(['vim','help'], &filetype) >= 0)
@@ -484,7 +484,6 @@ endfunction
 "autocmd CursorHold * silent call CocActionAsync('highlight')
 
 " Remap for rename current word
-nmap <leader>rn <Plug>(coc-rename)
 
 " Remap for format selected region
 xmap <leader>f  :Format<CR>
@@ -500,15 +499,66 @@ augroup mygroup
   autocmd User CocJumpPlaceholder call CocActionAsync('showSignatureHelp')
 augroup end
 
-" Remap for do codeAction of selected region, ex: `<leader>aap` for current paragraph
-xmap <leader>ac  <Plug>(coc-codeaction-selected)
-nmap <leader>ac  <Plug>(coc-codeaction-selected)
 
-" Remap for do codeAction of current line
-nmap <leader>ac  <Plug>(coc-codeaction)
+
+
+if has('patch-8.1.1880')
+  set completeopt=longest,menuone,popuphidden
+  " Highlight the completion documentation popup background/foreground the same as
+  " the completion menu itself, for better readability with highlighted
+  " documentation.
+  set completepopup=highlight:Pmenu,border:off
+else
+  set completeopt=longest,menuone,preview
+  " Set desired preview window height for viewing documentation.
+  set previewheight=5
+endif
+
+" Remap for do codeAction of selected region, ex: `<leader>aap` for current paragraph
+augroup typescript_commands
+  autocmd!
+  autocmd FileType typescript xmap <leader>ac  <Plug>(coc-codeaction-selected)
+  autocmd FileType typescript nmap <leader>ac  <Plug>(coc-codeaction-selected)
+  autocmd FileType typescript nmap <leader>ac  <Plug>(coc-codeaction)
+  autocmd FileType typescript nmap <silent> gd <Plug>(coc-definition)
+  autocmd FileType typescript nmap <silent> gy <Plug>(coc-type-definition)
+  autocmd FileType typescript nmap <silent> gi <Plug>(coc-implementation)
+  autocmd FileType typescript nmap <silent> gr <Plug>(coc-references)
+  autocmd FileType typescript nnoremap <leader>or :OR<cr>
+  autocmd FileType typescript nnoremap <silent> K :call <SID>show_documentation()<CR>
+  autocmd FileType typescript nmap <leader>rn <Plug>(coc-rename)
+  autocmd FileType typescript nnoremap <leader>cr :AsyncRun! -silent -strip npm run --silent start<cr>
+augroup END
 " Fix autofix problem of current line
 nmap <leader>qf  <Plug>(coc-fix-current)
 
+
+let g:OmniSharp_loglevel = 'debug'
+" let g:OmniSharp_highlighting = 2
+let g:OmniSharp_diagnostic_overrides = {
+\ 'IDE0010': {'type': 'I'},
+\ 'IDE0055': {'type': 'W', 'subtype': 'Style'},
+\ 'CS8019': {'type': 'None'},
+\ 'RemoveUnnecessaryImportsFixable': {'type': 'None'}
+\}
+
+
+
+let g:OmniSharp_popup_mappings = {
+\ 'close': 'q',
+\ 'sigNext': '<C-n>',
+\ 'sigPrev': '<C-p>',
+\ 'lineDown': ['<C-e>', 'j'],
+\ 'lineUp': ['<C-y>', 'k']
+\}
+
+let g:OmniSharp_popup_options = {
+\ 'highlight': 'Normal',
+\ 'padding': [1],
+\ 'border': [1],
+\ 'borderchars': ['─', '│', '─', '│', '╭', '╮', '╯', '╰'],
+\ 'borderhighlight': ['Special']
+\}
 
 " Use <C-d> for select selections ranges, needs server support, like: coc-tsserver, coc-python
 nmap <silent> <C-d> <Plug>(coc-range-select)
@@ -535,7 +585,7 @@ let g:gruvbox_contrast_dark='soft'
 set bg=dark
 
 " colorscheme simple-dark
-" colorscheme gruvbox
+colorscheme gruvbox
 " colorscheme solarized
 " colorscheme dracula
 " colorscheme dogrun
@@ -543,7 +593,7 @@ set bg=dark
 " colorscheme onehalfdark
 " colorscheme nord
 " colorscheme one
-colorscheme OceanicNext
+" colorscheme OceanicNext
 " colorscheme wal
 set encoding=UTF-8
  "dark red
@@ -609,7 +659,17 @@ function! PandocMarkdownToPdf()
   " something like this -> !pandoc -o somefilename.pdf somefilename.md
   write!
   sleep ".1s"
-  execute "AsyncRun! -silent -strip -close -mode=bang pandoc -o ".expand('%:r').".pdf ".expand('%').' | rifle '.expand('%:r').'.pdf'
+  execute "AsyncRun! -silent -strip -close -mode=bang pandoc -o .expand('%:r').".html ".expand('%').' | rifle '.expand('%:r').'.pdf'
+  
+endfunction
+
+" Pandoc Markdown To Pdf 
+function! PandocMermaidMarkdownToPdf()
+  " .expand('%:r') gets root file name and % gets full filename
+  " something like this -> !pandoc -o somefilename.pdf somefilename.md
+  write!
+  sleep ".1s"
+  execute "AsyncRun! -silent -strip -close -mode=bang pandoc --latext-engine=xelatex -V fontsize=30pt -F mermaid-filter -o ".expand('%:r').".pdf ".expand('%').' | rifle '.expand('%:r').'.pdf'
   
 endfunction
 
@@ -632,6 +692,7 @@ inoremap <leader>gs <c-o>:call GetAWSServiceActions_Insert()<cr>
 augroup Pandoc
   autocmd!
   autocmd FileType markdown nnoremap <buffer> ,p :call PandocMarkdownToPdf()<CR><CR> 
+  autocmd FileType markdown nnoremap <buffer> ,mp :call PandocMermaidMarkdownToPdf()<CR><CR> 
 augroup END
 
 augroup YamlStuff
@@ -673,19 +734,14 @@ endfunction
 " omnisharp
 " don't start yourself
 let g:OmniSharp_start_server = 1
-" let g:OmniSharp_server_use_mono = 1
-"let g:Omnisharp_port = 2000
-let g:OmniSharp_timeout = 5
-let g:OmniSharp_use_random_port = 1
-" User ctrl+p for completion
+let g:OmniSharp_server_use_mono = 0
+let g:OmniSharp_server_stdio = 1
 let g:OmniSharp_selector_ui = 'ctrlp'  " Use ctrlp.vim
-" sg:syntastic_auto_loc_listet completeopt=longest,menuone,preview
-" Get code issues and syntax errors
-let g:syntastic_cs_checkers = ['code_checker']
-" " Syntastic puts errors in locations list, which enable lnext, lprev
-" " navigation
 " let g:syntastic_always_populate_loc_list = 1
 " let g:syntastic_auto_loc_list = 1
+let g:OmniSharp_server_type = 'roslyn'
+let g:OmniSharp_prefer_global_sln = 1
+let g:OmniSharp_selector_ui = 'ctrlp'  " Use ctrlp.vim
 
 " Rename without dialog - with cursor on the symbol to rename: `:Rename newname`
 command! -nargs=1 Rename :call OmniSharp#actions#rename#To(" ")
@@ -693,18 +749,22 @@ command! -nargs=1 Rename :call OmniSharp#actions#rename#To(" ")
 augroup omnisharp_commands
   autocmd!
   " autocmd CursorHold *.cs OmniSharpTypeLookup
+  autocmd FileType cs set signcolumn=yes
   autocmd FileType cs nmap <silent> <buffer> gd <Plug>(omnisharp_go_to_definition)
   autocmd FileType cs nmap <silent> <buffer> gi <Plug>(omnisharp_find_implementations)
   autocmd FileType cs nmap <silent> <buffer> pd <Plug>(omnisharp_preview_definition)
   autocmd FileType cs nmap <silent> <buffer> pi <Plug>(omnisharp_preview_implementations)
   autocmd FileType cs nmap <silent> <buffer> K <Plug>(omnisharp_documentation)
-  autocmd FileType cs nmap <silent> <buffer> <leader>rn :Rename
-  autocmd FileType cs nmap <silent> <buffer> <Leader>ca <Plug>(omnisharp_code_actions)
+  autocmd FileType cs nmap <silent> <buffer> <Leader>or <Plug>(omnisharp_fix_usings)
+  autocmd FileType cs nmap <silent> <buffer> <Leader>rn :Rename 
+  autocmd FileType cs nmap <silent> <buffer> <Leader>ac <Plug>(omnisharp_code_actions)
   " Find all code errors/warnings for the current solution and populate the quickfix window
   autocmd FileType cs nmap <silent> <buffer> <Leader>gcc <Plug>(omnisharp_global_code_check)
   " autocmd TextChangedI *.cs SyntasticCheck
   autocmd FileType cs nmap <silent> <buffer> <leader>f :OmniSharpCodeFormat<CR>
   autocmd FileType cs nmap <silent> <buffer> <leader>a :OmniSharpFixUsings<CR>
+  autocmd FileType cs nnoremap <leader>cr :AsyncRun! -silent -strip dotnet run<cr>
+
 augroup END
 
 function GotoWindow(id)
@@ -838,7 +898,10 @@ augroup commandwindow
 augroup END
 
 let g:syntastic_python_checkers = ['pylint']
+" let g:UltiSnipsExpandTrigger="<tab>"
+" let g:UltiSnipsSnippetsDir="~/.vim/my-ultiSnips"
+" let g:UltiSnipsSnippetDirectories = ['my-ultiSnips', 'Ultisnips']
 
 " Set Background - Leave at bottom of file 
-" hi Normal guibg=NONE ctermbg=NONE
+" hi Normal guibg=black ctermbg=black
 
